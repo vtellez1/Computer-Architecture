@@ -94,7 +94,8 @@ class CPU:
                 IR += 3
 
             elif instruction == PRN:
-                print(self.reg[operand_a])
+                reg_num = self.ram_read(IR +1)
+                print(self.reg[reg_num])
                 IR += 2
 
             elif instruction == HLT:
