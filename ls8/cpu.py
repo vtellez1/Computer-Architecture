@@ -34,6 +34,9 @@ class CPU:
         """
         #Bonus: check to make sure the user has put a command line argument where you expect,
         #  and print an error and exit if they didn't.
+        if len(sys.argv) < 2:
+                print("Error, need to specify program. Now exiting")
+                sys.exit(1)
 
         # You will now want to use those command line arguments to open a file
         # Can look in sys.argv[1] for the name of the file to load.
