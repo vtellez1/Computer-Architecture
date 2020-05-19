@@ -102,6 +102,7 @@ class CPU:
         HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
+        MUL = 0b10100010
 
 
         running = True
@@ -117,6 +118,15 @@ class CPU:
                 operand_b = self.ram_read(IR +2)
                 self.reg[operand_a] = operand_b
                 IR += 3
+
+            elif instruction == MUL:
+                op_a = self.ram_read(IR + 1)
+                a = self.reg[op_a]
+                op_b = self.ram_read(IR +2)
+                b = self.reg[op_b]
+                ab_product = a * b
+                self.reg[op_a] = ab_product
+                IR +=3
 
             elif instruction == PRN:
                 reg_num = self.ram_read(IR +1)
