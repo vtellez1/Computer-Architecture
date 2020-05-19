@@ -2,6 +2,11 @@
 
 import sys
 
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+MUL = 0b10100010
+
 class CPU:
     """Main CPU class."""
 
@@ -10,6 +15,13 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        
+        self.branchtable = {}
+        self.branchtable[HLT] = self.handle_HLT
+        self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PRN] = self.handle_PRN
+        self.branchtable[MUL] = self.handle_MUL
+
 
     def load(self):
         """Load a program into memory."""
@@ -62,11 +74,33 @@ class CPU:
         #Memory Address Register (MAR)        
         return self.ram[MAR]
 
-
     def ram_write(self, MDR, MAR):
         #Memory Address Register (MAR) and Memory Data Register (MDR)        
         self.ram[MAR] = MDR
 
+    def handle_LDI(self):
+        operand_a = self.ram_read(self.pc +1)
+        operand_b = self.ram_read(self.pc +2)
+        self.reg[operand_a] = operand_b
+        self.pc += 3
+
+    def handle_PRN(self):
+        reg_num = self.ram_read(self.pc +1)
+        print(self.reg[reg_num])
+        self.pc += 2
+
+    def handle_HLT(self):
+        running = False
+        sys.exit(0)
+
+    def handle_MUL(self):
+        op_a = self.ram_read(self.pc + 1)
+        a = self.reg[op_a]
+        op_b = self.ram_read(self.pc +2)
+        b = self.reg[op_b]
+        ab_product = a * b
+        self.reg[op_a] = ab_product
+        self.pc +=3
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -99,45 +133,18 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        HLT = 0b00000001
-        LDI = 0b10000010
-        PRN = 0b01000111
-        MUL = 0b10100010
-
 
         running = True
 
-        #Instruction Register (IR)
-        IR = self.pc
-
         while running:
-            instruction = self.ram_read(IR)
+            
+            instruction = self.ram_read(self.pc)
 
-            if instruction == LDI:
-                operand_a = self.ram_read(IR +1)
-                operand_b = self.ram_read(IR +2)
-                self.reg[operand_a] = operand_b
-                IR += 3
-
-            elif instruction == MUL:
-                op_a = self.ram_read(IR + 1)
-                a = self.reg[op_a]
-                op_b = self.ram_read(IR +2)
-                b = self.reg[op_b]
-                ab_product = a * b
-                self.reg[op_a] = ab_product
-                IR +=3
-
-            elif instruction == PRN:
-                reg_num = self.ram_read(IR +1)
-                print(self.reg[reg_num])
-                IR += 2
-
-            elif instruction == HLT:
-                running = False
-                sys.exit(0)
-
+            if instruction:
+                self.branchtable[instruction]()
             else:
-                print(f'Unknown instruction {instruction} at address {IR}')
+                print(f'Unknown instruction {instruction} at address {self.pc}')
                 sys.exit(1)
+
+ 
 
