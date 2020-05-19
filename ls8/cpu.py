@@ -16,8 +16,8 @@ class CPU:
 
         address = 0
 
-        # For now, we've just hardcoded a program:
-
+        """
+        # For now, we've just hardcoded a program:        
         program = [
             # From print8.ls8
             0b10000010, # LDI R0,8
@@ -31,6 +31,28 @@ class CPU:
         for instruction in program:
             self.ram[address] = instruction
             address += 1
+        """
+        #Bonus: check to make sure the user has put a command line argument where you expect,
+        #  and print an error and exit if they didn't.
+
+        # You will now want to use those command line arguments to open a file
+        # Can look in sys.argv[1] for the name of the file to load.
+        with open(sys.argv[1]) as f:
+            # Read in its contents line by line
+            for line in f:
+                #Ignore everything after a #, since that's a comment
+                string_val = line.split("#")[0].strip()
+                #Be on the lookout for blank lines (ignore them)
+                if string_val == '':
+                    continue
+                # Convert the binary strings to integer values to store in RAM. 
+                # The built-in int() function can do that when you specify a 
+                # number base as the second argument
+                v = int(string_val, 2)
+                #print(v)
+                # And save appropriate data into RAM.
+                self.ram[address] = v
+                address += 1
 
 
     def ram_read(self, MAR):
