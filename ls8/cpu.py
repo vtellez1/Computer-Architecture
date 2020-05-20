@@ -6,6 +6,8 @@ HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -15,12 +17,18 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.sp = 7
+        #R7 is the sp
+        self.reg[self.sp] = 0xF4
+
         
         self.branchtable = {}
         self.branchtable[HLT] = self.handle_HLT
         self.branchtable[LDI] = self.handle_LDI
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
+        self.branchtable[PUSH] = self.handle_PUSH
+        self.branchtable[POP] = self.handle_POP
 
 
     def load(self):
@@ -101,6 +109,28 @@ class CPU:
         ab_product = a * b
         self.reg[op_a] = ab_product
         self.pc +=3
+    
+    def handle_PUSH(self):
+        self.reg[self.sp] -= 1
+
+        reg_num = self.ram[self.pc + 1]
+        value = self.reg[reg_num]
+
+        address = self.reg[self.sp]
+        self.ram[address] = value
+
+        self.pc += 2
+
+    def handle_POP(self):
+        address = self.reg[self.sp]
+        value = self.ram[address]
+
+        reg_num = self.ram[self.pc + 1]
+        self.reg[reg_num] = value
+
+        self.reg[self.sp] += 1
+       
+        self.pc += 2
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
