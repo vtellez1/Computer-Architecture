@@ -8,6 +8,9 @@ PRN = 0b01000111
 MUL = 0b10100010
 PUSH = 0b01000101
 POP = 0b01000110
+CALL = 0b01010000
+RET = 0b00010001
+ADD = 0b10100000
 
 class CPU:
     """Main CPU class."""
@@ -29,6 +32,9 @@ class CPU:
         self.branchtable[MUL] = self.handle_MUL
         self.branchtable[PUSH] = self.handle_PUSH
         self.branchtable[POP] = self.handle_POP
+        self.branchtable[CALL] = self.handle_CALL
+        self.branchtable[RET] = self.handle_RET
+        self.branchtable[ADD] = self.handle_ADD
 
 
     def load(self):
@@ -132,6 +138,39 @@ class CPU:
        
         self.pc += 2
 
+    def handle_CALL(self):
+        return_adr = self.pc + 2
+
+        # Push it on the stack
+        self.reg[self.sp] -= 1
+        top_of_stack_addr = self.reg[self.sp]
+        self.ram[top_of_stack_addr] = return_adr
+
+        # Set the PC to the subroutine addr
+        reg_num = self.ram[self.pc + 1]
+        subroutine_addr = self.reg[reg_num]
+
+        self.pc = subroutine_addr
+
+    def handle_RET(self):
+        # Pop the retunr adr off stack
+        top_of_stack_addr = self.reg[self.sp]
+        return_addr = self.ram[top_of_stack_addr]
+        self.reg[self.sp] += 1
+
+        #store it in the PC
+        self.pc = return_addr
+
+    def handle_ADD(self):
+        op_a = self.ram_read(self.pc + 1)
+        a = self.reg[op_a]
+        op_b = self.ram_read(self.pc +2)
+        b = self.reg[op_b]
+        ab_product = a + b
+        self.reg[op_a] = ab_product
+        self.pc +=3
+
+
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -171,6 +210,7 @@ class CPU:
             instruction = self.ram_read(self.pc)
 
             if instruction:
+                #print(instruction and 0b00010000 >>4)
                 self.branchtable[instruction]()
             else:
                 print(f'Unknown instruction {instruction} at address {self.pc}')
