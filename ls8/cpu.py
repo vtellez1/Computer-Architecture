@@ -12,6 +12,11 @@ CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
 
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
+
 class CPU:
     """Main CPU class."""
 
@@ -23,6 +28,7 @@ class CPU:
         self.sp = 7
         #R7 is the sp
         self.reg[self.sp] = 0xF4
+        self.fl = [0] * 8
 
         
         self.branchtable = {}
@@ -35,6 +41,11 @@ class CPU:
         self.branchtable[CALL] = self.handle_CALL
         self.branchtable[RET] = self.handle_RET
         self.branchtable[ADD] = self.handle_ADD
+
+        self.branchtable[CMP] = self.handle_CMP
+        self.branchtable[JMP] = self.handle_JMP
+        self.branchtable[JEQ] = self.handle_JEQ
+        self.branchtable[JNE] = self.handle_JNE
 
 
     def load(self):
@@ -169,6 +180,54 @@ class CPU:
         ab_product = a + b
         self.reg[op_a] = ab_product
         self.pc +=3
+    
+    def handle_CMP(self):
+        op_a = self.ram_read(self.pc + 1)
+        a = self.reg[op_a]
+        op_b = self.ram_read(self.pc +2)
+        b = self.reg[op_b]
+
+        # 00000LGE
+        #Compare the values in two registers.
+        # If they are equal, set the Equal E flag to 1, otherwise set it to 0.
+        if a == b:
+            self.fl[7] = 1
+            self.fl[6] = 0
+            self.fl[5] = 0
+
+        # If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+        elif a < b:
+            self.fl[5] = 1
+            self.fl[7] = 0
+            self.fl[6] = 0
+
+        # If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.        
+        elif a > b:
+            self.fl[6] = 1
+            self.fl[5] = 0
+            self.fl[7] = 0
+
+        self.pc +=3        
+
+    def handle_JMP(self):
+        #Jump to the address stored in the given register.
+        register = self.ram_read(self.pc + 1)
+        # Set the PC to the address stored in the given register.
+        self.pc = self.reg[register]
+
+    def handle_JEQ(self):
+        # If E (self.fl[7]) flag is set (true), jump to the address stored in the given register.
+        if self.fl[7] == 1:
+            self.handle_JMP()
+        else:
+            self.pc +=2
+
+    def handle_JNE(self):
+        # if E (slef.fl[7]) flag is clear (false, 0), jump to the address stored in the given register.
+        if self.fl[7] == 0:
+            self.handle_JMP()
+        else:
+            self.pc +=2
 
 
     def alu(self, op, reg_a, reg_b):
@@ -204,13 +263,9 @@ class CPU:
         """Run the CPU."""
 
         running = True
-
-        while running:
-            
+        while running:           
             instruction = self.ram_read(self.pc)
-
             if instruction:
-                #print(instruction and 0b00010000 >>4)
                 self.branchtable[instruction]()
             else:
                 print(f'Unknown instruction {instruction} at address {self.pc}')
